@@ -42,7 +42,6 @@ vim.keymap.set('n', '<leader>,', function() Snacks.picker.buffers() end, { desc 
 vim.keymap.set('n', '<leader>/', function() Snacks.picker.grep() end, { desc = 'Grep' })
 vim.keymap.set('n', '<leader>:', function() Snacks.picker.command_history() end, { desc = 'Command History' })
 vim.keymap.set('n', '<leader>n', function() Snacks.picker.notifications() end, { desc = 'Notification History' })
-vim.keymap.set('n', '<leader>e', function() Snacks.explorer() end, { desc = 'File Explorer' })
 
 -- find
 vim.keymap.set('n', '<leader>fb', function() Snacks.picker.buffers() end, { desc = 'Buffers' })
@@ -58,9 +57,14 @@ vim.keymap.set('n', '<leader>gl', function() Snacks.picker.git_log() end, { desc
 vim.keymap.set('n', '<leader>gL', function() Snacks.picker.git_log_line() end, { desc = 'Git Log Line' })
 vim.keymap.set('n', '<leader>gs', function() Snacks.picker.git_status() end, { desc = 'Git Status' })
 vim.keymap.set('n', '<leader>gS', function() Snacks.picker.git_stash() end, { desc = 'Git Stash' })
-vim.keymap.set('n', '<leader>gd', function() Snacks.picker.git_diff() end, { desc = 'Git Diff (Hunks)' })
+-- vim.keymap.set('n', '<leader>gd', function() Snacks.picker.git_diff() end, { desc = 'Git Diff (Hunks)' })
 vim.keymap.set('n', '<leader>gf', function() Snacks.picker.git_log_file() end, { desc = 'Git Log File' })
 vim.keymap.set('n', '<leader>gg', function() Snacks.lazygit.open() end, { desc = 'LazyGit' })
+
+-- Diffview
+vim.keymap.set('n', '<leader>gdd', function() vim.cmd 'DiffviewOpen' end, { desc = 'Open' })
+vim.keymap.set('n', '<leader>gdq', function() vim.cmd 'DiffviewClose' end, { desc = 'Close' })
+vim.keymap.set('n', '<leader>gdh', function() vim.cmd 'DiffviewFileHistory' end, { desc = 'History' })
 
 -- gh
 vim.keymap.set('n', '<leader>gi', function() Snacks.picker.gh_issue() end, { desc = 'GitHub Issues (open)' })
@@ -106,12 +110,16 @@ vim.keymap.set({ 'i', 'n', 's' }, '<c-b>', function()
 end, { silent = true, expr = true, desc = 'Scroll Backward' })
 
 -- [[ Copilot ]] --
-local copilot_active = true
-
 -- Smart accept
 vim.keymap.set('i', '<C-l>', 'copilot#Accept("")', { expr = true, silent = true, replace_keycodes = false })
+
 -- Toggle Copilot
-vim.keymap.set('n', '<leader>uc', function()
-  copilot_active = not copilot_active
-  vim.cmd(copilot_active and 'Copilot enable' or 'Copilot disable')
-end, { desc = 'Toggle Copilot' })
+Snacks.toggle({
+  name = 'Copilot',
+  icon = { enabled = '\u{ec1e}', disabled = '\u{eabd}' },
+  get = function()
+    local response = vim.api.nvim_cmd({ cmd = 'Copilot', args = { 'status' } }, { output = true })
+    return response:lower():find('ready', 1, true) ~= nil
+  end,
+  set = function(state) vim.cmd(state and 'Copilot enable' or 'Copilot disable') end,
+}):map '<leader>uc'

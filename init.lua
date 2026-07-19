@@ -221,6 +221,9 @@ do
 
   -- Copilot
   vim.g.copilot_no_tab_map = true
+
+  -- Git diff
+  vim.opt.diffopt:append 'algorithm:histogram'
 end
 
 -- ============================================================
@@ -431,6 +434,7 @@ do
         { '<leader>l', group = 'lsp', icon = { icon = '󰞋', color = 'red' } },
         { '<leader>f', group = 'file/find' },
         { '<leader>g', group = 'git' },
+        { '<leader>gd', group = 'diffview' },
         { '<leader>gh', group = 'hunks' },
         { '<leader>q', group = 'quit/session' },
         { '<leader>s', group = 'search' },
@@ -464,6 +468,21 @@ do
   --
   -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
   vim.pack.add { gh 'folke/tokyonight.nvim' }
+  vim.pack.add { gh 'sainnhe/gruvbox-material' }
+  vim.pack.add { gh 'projekt0n/github-nvim-theme' }
+  vim.pack.add {
+    {
+      src = 'https://github.com/rose-pine/neovim',
+      name = 'rose-pine',
+    },
+  }
+
+  require('rose-pine').setup {
+    styles = {
+      italic = false,
+    },
+  }
+
   ---@diagnostic disable-next-line: missing-fields
   require('tokyonight').setup {
     styles = {
@@ -471,10 +490,18 @@ do
     },
   }
 
+  vim.g.gruvbox_material_background = 'soft'
+  vim.g.gruvbox_material_cursor = 'blue'
+  vim.g.gruvbox_material_inlay_hints_background = 'dimmed'
+  vim.g.gruvbox_material_diagnostic_virtual_tex = 'colored'
+
   -- Load the colorscheme here.
   -- Like many other themes, this one has different styles, and you could load
   -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
   vim.cmd.colorscheme 'tokyonight-night'
+
+  -- Github light is better than kanagawa light
+  -- vim.cmd 'colorscheme github_dark'
 
   -- Highlight todo, notes, etc in comments
   vim.pack.add { gh 'folke/todo-comments.nvim' }
@@ -599,6 +626,14 @@ do
   --
   -- If you're wondering about lsp vs treesitter, you can check out the wonderfully
   -- and elegantly composed help section, `:help lsp-vs-treesitter`
+
+  local capabilities = vim.lsp.protocol.make_client_capabilities()
+  capabilities.workspace.fileOperations.willRename = true
+  capabilities.workspace.fileOperations.didRename = true
+
+  vim.lsp.config('*', {
+    capabilities = capabilities,
+  })
 
   -- Useful status updates for LSP.
   vim.pack.add { gh 'j-hui/fidget.nvim' }
@@ -831,7 +866,8 @@ do
       -- python = { "ruff_fix", "ruff_format", "ruff_organize_imports" },
       --
       -- You can use 'stop_after_first' to run the first available formatter from the list
-      javascript = { 'prettierd', 'prettier', stop_after_first = true },
+      javascript = { 'prettier' },
+      typescript = { 'prettier' },
       json = { 'prettierd', 'prettier', stop_after_first = true },
     },
   }
@@ -916,14 +952,14 @@ do
         },
       },
 
-      trigger = {
-        show_on_keyword = false,
-        show_on_trigger_character = true,
-      },
+      -- trigger = {
+      --   show_on_keyword = false,
+      --   show_on_trigger_character = true,
+      -- },
     },
 
     sources = {
-      default = { 'lazydev', 'lsp', 'path', 'snippets', 'buffer' },
+      default = { 'lazydev', 'lsp', 'path', 'snippets' },
       providers = {
         lazydev = {
           name = 'LazyDev',
@@ -943,11 +979,11 @@ do
     -- the rust implementation via `'prefer_rust_with_warning'`
     --
     -- See `:help blink-cmp-config-fuzzy` for more information
-    fuzzy = { implementation = 'lua' },
+    fuzzy = { implementation = 'rust' },
 
     -- Shows a signature help window while you type arguments for a function
     signature = {
-      enabled = false,
+      enabled = true,
     },
   }
 end
@@ -1055,7 +1091,7 @@ do
   -- require 'kickstart.plugins.lint'
   require 'kickstart.plugins.autopairs'
   -- require 'kickstart.plugins.neo-tree'
-  -- require 'kickstart.plugins.gitsigns' -- adds gitsigns recommended keymaps
+  require 'kickstart.plugins.gitsigns' -- adds gitsigns recommended keymaps
 
   -- NOTE: You can add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --
@@ -1071,6 +1107,10 @@ vim.pack.add {
   gh 'folke/lazydev.nvim',
   gh 'karb94/neoscroll.nvim',
 
+  -- Oil file explorer
+  gh 'stevearc/oil.nvim',
+  gh 'refractalize/oil-git-status.nvim',
+
   -- Noice & its dependencies
   gh 'MunifTanjim/nui.nvim', -- noice requirement
   gh 'folke/noice.nvim',
@@ -1081,6 +1121,52 @@ vim.pack.add {
 
   -- Copilot
   gh 'github/copilot.vim',
+
+  -- Git
+  gh 'sindrets/diffview.nvim',
+}
+
+local oil_open = false
+
+require('oil').setup {
+  win_options = {
+    signcolumn = 'yes:2',
+  },
+
+  view_options = {
+    show_hidden = true,
+    is_always_hidden = function(name, _)
+      local hidden = {
+        '__pycache__',
+        '.git',
+        '.ruff_cache',
+      }
+      return vim.tbl_contains(hidden, name)
+    end,
+  },
+
+  lsp_file_methods = {
+    -- Enable or disable LSP file operations
+    enabled = true,
+    -- Time to wait for LSP file operations to complete before skipping
+    timeout_ms = 1000,
+    -- Set to true to autosave buffers that are updated with LSP willRenameFiles
+    -- Set to "unmodified" to only save unmodified buffers
+    autosave_changes = true,
+  },
+
+  keymaps = {
+    ['<leader>e'] = { 'actions.close', mode = 'n' },
+  },
+}
+
+require('oil-git-status').setup()
+vim.keymap.set('n', '<leader>e', '<CMD>Oil<CR>', { desc = 'Oil' })
+
+require('diffview').setup {
+  hooks = {
+    diff_buf_read = function(_) vim.opt_local.relativenumber = false end,
+  },
 }
 
 require('neoscroll').setup()
@@ -1088,23 +1174,12 @@ require('neoscroll').setup()
 require('snacks').setup {
   picker = {
     enabled = true,
-    sources = {
-      explorer = {
-        hidden = true,
-        include = { '.claude', '.github' },
-        exclude = { '__pycache__', '*.pyc', '.ruff_cache' },
-        auto_close = true,
-        layout = {
-          preset = 'default', -- opt: sidebar
-        },
-      },
-    },
   },
   input = { enabled = true },
-  explorer = { enabled = true },
   indent = { enabled = true },
   quickfile = { enabled = true },
   lazygit = { enabled = true },
+
   words = { enabled = true },
 }
 
@@ -1121,7 +1196,7 @@ require('noice').setup {
       enabled = false,
     },
     signature = {
-      enabled = true,
+      enabled = false,
     },
     -- override markdown rendering so that **cmp** and other plugins use **Treesitter**
     override = {
