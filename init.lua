@@ -311,6 +311,21 @@ do
     group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
     callback = function() vim.hl.on_yank() end,
   })
+
+  -- Some terminals display a gap between the terminal background and the Neovim background
+  -- This autocommand fixes that by setting the terminal background color to match Neovim's
+  -- through escape sequences (OSC 11 & 111)
+  vim.api.nvim_create_autocmd({ 'UIEnter', 'ColorScheme' }, {
+    callback = function()
+      local normal = vim.api.nvim_get_hl(0, { name = 'Normal' })
+      if not normal.bg then return end
+      io.write(string.format('\027]11;#%06x\027\\', normal.bg))
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ 'UILeave' }, {
+    callback = function() io.write '\x1b]111;\x1b\\' end,
+  })
 end
 
 -- ============================================================
