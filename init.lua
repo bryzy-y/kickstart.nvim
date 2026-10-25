@@ -96,15 +96,18 @@ do
   -- See `:help mapleader`
   --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
   vim.g.mapleader = ' '
-  vim.g.maplocalleader = ' '
+  vim.g.maplocalleader = ','
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
-  vim.g.have_nerd_font = false
+  vim.g.have_nerd_font = true
 
   -- [[ Setting options ]]
   --  See `:help vim.o`
   -- NOTE: You can change these options as you wish!
   --  For more options, you can see `:help option-list`
+
+  -- Delete swap files
+  vim.opt.swapfile = false
 
   -- Make line numbers default
   vim.o.number = true
@@ -431,11 +434,6 @@ do
     },
   }
 
-  -- Load the colorscheme here.
-  -- Like many other themes, this one has different styles, and you could load
-  -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-  vim.cmd.colorscheme 'tokyonight-night'
-
   -- Highlight todo, notes, etc in comments
   vim.pack.add { gh 'folke/todo-comments.nvim' }
   require('todo-comments').setup { signs = false }
@@ -472,7 +470,9 @@ do
   -- - sd'   - [S]urround [D]elete [']quotes
   -- - sr)'  - [S]urround [R]eplace [)] [']
   require('mini.surround').setup()
-
+  -- Sync terminal colors with nvim
+  require('mini.misc').setup_termbg_sync()
+  --
   -- Simple and easy statusline.
   --  You could remove this setup call if you don't like it,
   --  and try some other statusline plugin
@@ -488,6 +488,11 @@ do
 
   -- ... and there is more!
   --  Check out: https://github.com/nvim-mini/mini.nvim
+
+  -- Load the colorscheme here.
+  -- Like many other themes, this one has different styles, and you could load
+  -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+  vim.cmd.colorscheme 'miniautumn'
 end
 
 -- ============================================================
@@ -572,16 +577,16 @@ do
       local buf = event.buf
 
       -- Find references for the word under your cursor.
-      vim.keymap.set('n', 'grr', builtin.lsp_references, { buffer = buf, desc = '[G]oto [R]eferences' })
+      vim.keymap.set('n', 'gr', builtin.lsp_references, { buffer = buf, desc = '[G]oto [R]eferences' })
 
       -- Jump to the implementation of the word under your cursor.
       -- Useful when your language has ways of declaring types without an actual implementation.
-      vim.keymap.set('n', 'gri', builtin.lsp_implementations, { buffer = buf, desc = '[G]oto [I]mplementation' })
+      vim.keymap.set('n', 'gi', builtin.lsp_implementations, { buffer = buf, desc = '[G]oto [I]mplementation' })
 
       -- Jump to the definition of the word under your cursor.
       -- This is where a variable was first declared, or where a function is defined, etc.
       -- To jump back, press <C-t>.
-      vim.keymap.set('n', 'grd', builtin.lsp_definitions, { buffer = buf, desc = '[G]oto [D]efinition' })
+      vim.keymap.set('n', 'gd', builtin.lsp_definitions, { buffer = buf, desc = '[G]oto [D]efinition' })
 
       -- Fuzzy find all the symbols in your current document.
       -- Symbols are things like variables, functions, types, etc.
@@ -594,7 +599,7 @@ do
       -- Jump to the type of the word under your cursor.
       -- Useful when you're not sure what type a variable is and you want to see
       -- the definition of its *type*, not where it was *defined*.
-      vim.keymap.set('n', 'grt', builtin.lsp_type_definitions, { buffer = buf, desc = '[G]oto [T]ype Definition' })
+      vim.keymap.set('n', 'gt', builtin.lsp_type_definitions, { buffer = buf, desc = '[G]oto [T]ype Definition' })
     end,
   })
 
@@ -679,15 +684,15 @@ do
 
       -- Rename the variable under your cursor.
       --  Most Language Servers support renaming across files, etc.
-      map('grn', vim.lsp.buf.rename, '[R]e[n]ame')
+      map('<leader>lr', vim.lsp.buf.rename, '[R]e[n]ame')
 
       -- Execute a code action, usually your cursor needs to be on top of an error
       -- or a suggestion from your LSP for this to activate.
-      map('gra', vim.lsp.buf.code_action, '[G]oto Code [A]ction', { 'n', 'x' })
+      map('<leader>la', vim.lsp.buf.code_action, '[G]oto Code [A]ction', { 'n', 'x' })
 
       -- WARN: This is not Goto Definition, this is Goto Declaration.
       --  For example, in C this would take you to the header.
-      map('grD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+      map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
 
       -- The following two autocommands are used to highlight references of the
       -- word under your cursor when your cursor rests there for a little while.
@@ -791,7 +796,7 @@ do
 
   -- Translates between nvim-lspconfig server names and mason.nvim package names (e.g. lua_ls <-> lua-language-server)
   require('mason-lspconfig').setup {
-    automatic_enable = false, -- Change this to true if you want to automatically enable servers that are installed manually (e.g. via :Mason / :MasonInstall)
+    automatic_enable = true, -- Change this to true if you want to automatically enable servers that are installed manually (e.g. via :Mason / :MasonInstall)
   }
 
   -- Ensure the servers and tools above are installed
@@ -826,7 +831,8 @@ do
     format_on_save = function(bufnr)
       -- You can specify filetypes to autoformat on save here:
       local enabled_filetypes = {
-        -- lua = true,
+        lua = true,
+        markdown = true,
         -- python = true,
       }
       if enabled_filetypes[vim.bo[bufnr].filetype] then
@@ -841,6 +847,7 @@ do
     -- You can also specify external formatters in here.
     formatters_by_ft = {
       -- rust = { 'rustfmt' },
+      markdown = { 'prettierd', 'injected' },
       -- Conform can also run multiple formatters sequentially
       -- python = { "isort", "black" },
       --
@@ -868,8 +875,10 @@ do
   --    See the README about individual language/framework/plugin snippets:
   --    https://github.com/rafamadriz/friendly-snippets
   --
-  -- vim.pack.add { gh 'rafamadriz/friendly-snippets' }
-  -- require('luasnip.loaders.from_vscode').lazy_load()
+  vim.pack.add { gh 'rafamadriz/friendly-snippets' }
+  require('luasnip.loaders.from_vscode').lazy_load {
+    include = { 'markdown' },
+  }
 
   -- [[ Autocomplete Engine ]]
   vim.pack.add { { src = gh 'saghen/blink.cmp', version = vim.version.range '1.*' } }
@@ -948,7 +957,7 @@ do
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'python' }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
@@ -1015,9 +1024,9 @@ do
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
   -- require 'kickstart.plugins.debug'
-  -- require 'kickstart.plugins.indent_line'
+  require 'kickstart.plugins.indent_line'
   -- require 'kickstart.plugins.lint'
-  -- require 'kickstart.plugins.autopairs'
+  require 'kickstart.plugins.autopairs'
   -- require 'kickstart.plugins.neo-tree'
 
   -- NOTE: You can add your own plugins, configuration, etc. in `lua/custom/plugins/*.lua`.
@@ -1033,6 +1042,108 @@ do
   -- require 'custom.plugins.colorscheme'
   -- require 'custom.plugins.ui'
   -- require 'custom.plugins.git'
+
+  vim.pack.add {
+    'https://github.com/stevearc/oil.nvim',
+  }
+  require('oil').setup()
+  vim.keymap.set('n', '<leader>e', '<CMD>Oil<CR>', { desc = 'Open parent directory' })
+
+  -- Rebind it from K to <prefix>gk
+  -- vim.g['conjure#mapping#doc_word'] = 'gk'
+  -- vim.pack.add { gh 'Olical/conjure' }
+  --
+  vim.pack.add { gh 'Vigemus/iron.nvim' }
+
+  local iron = require 'iron.core'
+  iron.setup {
+    config = {
+      -- Highlights the last sent block with bold
+      highlight_last = 'IronLastSent',
+
+      -- Toggling behavior is on by default.
+      -- Other options are: `single` and `focus`
+      visibility = require('iron.visibility').toggle,
+
+      -- Scope of the repl
+      -- By default it is one for the same `pwd`
+      -- Other options are `tab_based` and `singleton`
+      scope = require('iron.scope').path_based,
+
+      -- Whether the repl buffer is a "throwaway" buffer or not
+      scratch_repl = false,
+
+      -- Automatically closes the repl window on process end
+      close_window_on_exit = true,
+      repl_definition = {
+        -- forcing a default
+        python = require('iron.fts.python').python,
+      },
+      -- Whether iron should map the `<plug>(..)` mappings
+      should_map_plug = true,
+
+      -- Repl position. Check `iron.view` for more options,
+      -- currently there are four positions: left, right, bottom, top,
+      -- Alternatively, pass a function, which is evaluated when a repl is open.
+      repl_open_cmd = require('iron.view').curry.right(function() return vim.o.columns / 2 end),
+
+      -- If the repl buffer is listed
+      buflisted = false,
+    },
+
+    -- All the keymaps are set individually
+    -- Below is a suggested default
+    keymaps = {
+      send_motion = '<localleader>sc',
+      visual_send = '<localleader>sc',
+      send_file = '<localleader>sf',
+      send_line = '<localleader>sl',
+      send_until_cursor = '<localleader>su',
+      send_mark = '<localleader>sm',
+      send_code_block = '<localleader>sb',
+      send_code_block_and_move = '<localleader>sn',
+      mark_motion = '<localleader>mc',
+      mark_visual = '<localleader>mc',
+      remove_mark = '<localleader>md',
+      cr = '<localleader>s<cr>',
+      interrupt = '<localleader>s<localleader>',
+      exit = '<localleader>sq',
+      clear = '<localleader>cl',
+    },
+
+    -- If the highlight is on, you can change how it looks
+    -- For the available options, check nvim_set_hl
+    highlight = {
+      italic = true,
+    },
+  }
+
+  vim.pack.add { gh 'morhetz/gruvbox' }
+  vim.pack.add { gh 'maxmx03/solarized.nvim' }
+  vim.pack.add { gh 'rebelot/kanagawa.nvim' }
+
+  vim.pack.add { gh 'sainnhe/everforest' }
+
+  require('solarized').setup {
+    palette = 'selenized',
+  }
+
+  -- vim.g.everforest_background = 'soft' -- "hard" | "medium" (default) | "soft"
+  vim.g.everforest_background = 'soft'
+  vim.g.everforest_transparent_background = 1
+  vim.g.everforest_ui_contrast = 'high' -- brighter line numbers, indent guides, etc.
+  vim.g.everforest_float_style = 'bright' -- "bright" | "dim" | "blend"
+  vim.g.everforest_diagnostic_virtual_text = 'colored' -- "grey" (default) | "colored" | "highlighted"
+  vim.g.everforest_enable_italic = false -- needs a font with cursive italics
+
+  vim.cmd.colorscheme 'everforest'
+
+  vim.pack.add { gh 'vim-test/vim-test' }
+  vim.g['test#strategy'] = 'neovim'
+
+  vim.pack.add { gh 'stevearc/aerial.nvim' }
+
+  require('aerial').setup {}
 end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
