@@ -77,9 +77,9 @@ for the tradeoffs between the two approaches.
 > Your repo's URL will be something like this:
 > `https://github.com/<your_github_username>/kickstart.nvim.git`
 
-You likely want to remove `nvim-pack-lock.json` from your repo's `.gitignore`
+You likely want to remove `lazy-lock.json` from your repo's `.gitignore`
 file too - it's ignored in the kickstart repo to make maintenance easier, but
-it's recommended to track it in version control (see `:help vim.pack-lockfile`).
+it's recommended to track it in version control (see `:help lazy.nvim-lockfile`).
 
 #### Clone kickstart.nvim
 
@@ -120,10 +120,8 @@ Start Neovim
 nvim
 ```
 
-That's it! `vim.pack` will install all the plugins from your config. Use
-`:lua vim.pack.update(nil, { offline = true })` to inspect plugin state and
-`:lua vim.pack.update()` to fetch updates (`:write` applies updates, `:quit`
-cancels them).
+That's it! lazy.nvim will install all the plugins from your config. Use
+`:Lazy` to inspect plugin state and `:Lazy update` to fetch updates.
 
 #### Read The Friendly Documentation
 
