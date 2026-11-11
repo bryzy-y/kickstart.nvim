@@ -5,7 +5,8 @@
 --
 -- To switch the default, move `lazy = false` + `priority` + the `vim.cmd.colorscheme`
 -- call to another entry.
-
+---@module 'lazy'
+---@type LazySpec
 return {
   'sainnhe/everforest',
   lazy = false,

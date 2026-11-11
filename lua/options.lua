@@ -64,4 +64,22 @@ vim.o.scrolloff = 10
 -- See `:help 'confirm'`
 vim.o.confirm = true
 
+-- nicer borders
+vim.o.winborder = 'solid'
+
+-- GitHub-style diffs (split view)
+--  See `:help 'diffopt'`
+vim.opt.diffopt = {
+  'internal', -- built-in diff engine
+  'filler', -- blank filler lines keep both sides aligned
+  'closeoff', -- leave diff mode when only one diff window remains
+  'vertical', -- side by side, like GitHub's split view
+  'indent-heuristic', -- git's default hunk boundaries (algorithm stays git's default, myers)
+  'linematch:60', -- pair up changed lines within a hunk, like GitHub's split rows
+  'inline:word', -- highlight changed words within a line
+  'context:3', -- fold unchanged code beyond 3 lines of context, like GitHub's collapsed sections
+  --'followwrap', -- keep 'wrap' in diff windows; GitHub wraps long lines
+}
+vim.opt.fillchars:append { diff = ' ' } -- plain empty filler lines, like GitHub
+
 -- vim: ts=2 sts=2 sw=2 et

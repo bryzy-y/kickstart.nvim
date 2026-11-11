@@ -4,5 +4,14 @@
 return {
   'stevearc/aerial.nvim',
   cmd = { 'AerialToggle', 'AerialOpen', 'AerialNavToggle', 'AerialNavOpen' },
-  opts = {},
+  opts = {
+    nav = {
+      win_opts = {
+        winblend = 0, -- opaque nav window (default is 10)
+      },
+    },
+  },
+  keys = {
+    { '<leader>lo', '<cmd>AerialToggle<cr>', desc = 'Code Outline' },
+  },
 }

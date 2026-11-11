@@ -114,8 +114,6 @@ return {
             },
             workspace = {
               checkThirdParty = false,
-              -- NOTE: this is a lot slower and will cause issues when working on your own configuration.
-              --  See https://github.com/neovim/nvim-lspconfig/issues/3189
               library = {
                 vim.env.VIMRUNTIME,
                 '${3rd}/luv/library',
